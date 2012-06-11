@@ -26,164 +26,164 @@ import "io"
 // string on success.
 func WordList(hash, wordListName string) (found string, err error) {
 
-	//Validate hash by trying to decode it as hexadecimal
-	_, err = hex.DecodeString(hash)
-	if err != nil {
-		return "", err
-	}
+   //Validate hash by trying to decode it as hexadecimal
+   _, err = hex.DecodeString(hash)
+   if err != nil {
+      return "", err
+   }
 
-	//Validate length of hash. 32 (MD5) 40 (SHA1)
-	if len(hash) != 32 && len(hash) != 40 {
-		return "", errors.New("Invalid hash - length mismatch")
-	}
+   //Validate length of hash. 32 (MD5) 40 (SHA1)
+   if len(hash) != 32 && len(hash) != 40 {
+      return "", errors.New("Invalid hash - length mismatch")
+   }
 
-	//Use hashing function determined by length of hash
-	hashFunc := str2hash.MD5
-	if len(hash) == 40 {
-		hashFunc = str2hash.SHA1
-	}
+   //Use hashing function determined by length of hash
+   hashFunc := str2hash.MD5
+   if len(hash) == 40 {
+      hashFunc = str2hash.SHA1
+   }
 
-	//Open word list
-	file, err := os.Open(wordListName)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
+   //Open word list
+   file, err := os.Open(wordListName)
+   if err != nil {
+      return "", err
+   }
+   defer file.Close()
 
-	//Make file into buffered reader
-	r := bufio.NewReader(file)
+   //Make file into buffered reader
+   r := bufio.NewReader(file)
 
-	mutateFunctions := []func(string) string{
-		strings.Title,
-		strings.ToUpper,
-		strings.ToLower,
-		mutation.Leet,
-	}
+   mutateFunctions := []func(string) string{
+      strings.Title,
+      strings.ToUpper,
+      strings.ToLower,
+      mutation.Leet,
+   }
 
-	//For each word in word list, hash it and compare it to the entered hash.
-	//If they match, the password is the hashed word
-	for {
+   //For each word in word list, hash it and compare it to the entered hash.
+   //If they match, the password is the hashed word
+   for {
 
-		l, _, err := r.ReadLine()
+      l, _, err := r.ReadLine()
 
-		//Break if EOF to induce "Hash not found"
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return "", err
-		}
+      //Break if EOF to induce "Hash not found"
+      if err != nil {
+         if err == io.EOF {
+            break
+         }
+         return "", err
+      }
 
-		//[]byte to string
-		word := string(l)
+      //[]byte to string
+      word := string(l)
 
-		//Compare hash with hashed word
-		if hash == hashFunc(word) {
-			return word, nil
-		}
+      //Compare hash with hashed word
+      if hash == hashFunc(word) {
+         return word, nil
+      }
 
-		//Mutate the word for each mutation function
-		for _, mutateFunc := range mutateFunctions {
+      //Mutate the word for each mutation function
+      for _, mutateFunc := range mutateFunctions {
 
-			word := mutateFunc(word)
+         word := mutateFunc(word)
 
-			if hash == hashFunc(word) {
-				return word, nil
-			}
-		}
+         if hash == hashFunc(word) {
+            return word, nil
+         }
+      }
 
-		numberList := mutation.NumberSuffix(word)
-		for _, intString := range numberList {
-			if hash == hashFunc(intString) {
-				return intString, nil
-			}
-		}
-	}
-	return "", errors.New("Hash not found")
+      numberList := mutation.NumberSuffix(word)
+      for _, intString := range numberList {
+         if hash == hashFunc(intString) {
+            return intString, nil
+         }
+      }
+   }
+   return "", errors.New("Hash not found")
 }
 
 func Google(hash string) (results int, err error) {
 
-	//Get response from google
-	//hl is language variable, nfpr is automatic no-redirect for more believable search, q is query
-	resp, err := http.Get("https://encrypted.google.com/search?hl=en&nfpr=1&q=" + hash)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
+   //Get response from google
+   //hl is language variable, nfpr is automatic no-redirect for more believable search, q is query
+   resp, err := http.Get("https://encrypted.google.com/search?hl=en&nfpr=1&q=" + hash)
+   if err != nil {
+      return 0, err
+   }
+   defer resp.Body.Close()
 
-	//Make resp.Body into []byte 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return 0, err
-	}
+   //Make resp.Body into []byte 
+   body, err := ioutil.ReadAll(resp.Body)
+   if err != nil {
+      return 0, err
+   }
 
-	//String to be converted into integer
-	stringResults := ""
+   //String to be converted into integer
+   stringResults := ""
 
-	//Find "About " where after that string the results in numerals are printed.
-	//Increment offset by len to remove "About "
-	html := body[strings.Index(string(body), "About ")+len("About "):]
+   //Find "About " where after that string the results in numerals are printed.
+   //Increment offset by len to remove "About "
+   html := body[strings.Index(string(body), "About ")+len("About "):]
 
-	//No search term on google is longer than 15 characters
-	for i := 0; i < 15; i++ {
+   //No search term on google is longer than 15 characters
+   for i := 0; i < 15; i++ {
 
-		//If it's a number concatenation the number on to stringResults.
-		//Else if it's a ",", continue, since google uses these as number separators
-		if isNumeric(html[i]) {
-			stringResults += string(html[i])
-		} else if html[i] == 0x2c {
-			continue
-		} else {
-			break
-		}
-	}
+      //If it's a number concatenation the number on to stringResults.
+      //Else if it's a ",", continue, since google uses these as number separators
+      if isNumeric(html[i]) {
+         stringResults += string(html[i])
+      } else if html[i] == 0x2c {
+         continue
+      } else {
+         break
+      }
+   }
 
-	//If some numbers where added to the string
-	if len(stringResults) > 0 {
+   //If some numbers where added to the string
+   if len(stringResults) > 0 {
 
-		//Convert stringResults to int
-		nResults, err := strconv.Atoi(stringResults)
-		if err != nil {
-			return 0, err
-		}
+      //Convert stringResults to int
+      nResults, err := strconv.Atoi(stringResults)
+      if err != nil {
+         return 0, err
+      }
 
-		return nResults, nil
-	}
+      return nResults, nil
+   }
 
-	return 0, nil
+   return 0, nil
 }
 
 func isNumeric(input byte) bool {
 
-	if input >= 0x30 && input <= 0x39 {
-		return true
-	}
+   if input >= 0x30 && input <= 0x39 {
+      return true
+   }
 
-	return false
+   return false
 }
 
 /*
 func BruteForce(hash string) (found string, err error) {
 
-	//Start with a-z
-	//when z, reset to a and add z
-	//when za, reset to a and increment to zb
-	//when zz, reset to a's and add a -> aaa
+   //Start with a-z
+   //when z, reset to a and add z
+   //when za, reset to a and increment to zb
+   //when zz, reset to a's and add a -> aaa
 
-	hashFunc := str2hash.MD5
-	if len(hash) == 40 {
-		hashFunc = str2hash.SHA1
-	}
+   hashFunc := str2hash.MD5
+   if len(hash) == 40 {
+      hashFunc = str2hash.SHA1
+   }
 
-	s := []string{}
+   s := []string{}
 
-	for char := 97; char <= 122; char++ {
-		s[0] = string(char)
-	}
-	fmt.Println(s)
-	fmt.Println(hashFunc(string(s)))
+   for char := 97; char <= 122; char++ {
+      s[0] = string(char)
+   }
+   fmt.Println(s)
+   fmt.Println(hashFunc(string(s)))
 
-	return "", errors.New("Hash not found")
+   return "", errors.New("Hash not found")
 }
 */

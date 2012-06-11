@@ -27,104 +27,104 @@ var qFlag = flag.String("q", "", "Queues the hash to be cracked")
 
 func main() {
 
-	flag.Parse()
+   flag.Parse()
 
-	//Create profiling file if filename was entered
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
+   //Create profiling file if filename was entered
+   if *cpuprofile != "" {
+      f, err := os.Create(*cpuprofile)
+      if err != nil {
+         log.Fatal(err)
+      }
+      defer f.Close()
 
-		//Start profiling
-		pprof.StartCPUProfile(f)
+      //Start profiling
+      pprof.StartCPUProfile(f)
 
-		//Stop profiling when program returns
-		defer pprof.StopCPUProfile()
-	}
+      //Stop profiling when program returns
+      defer pprof.StopCPUProfile()
+   }
 
-	hash := ""
+   hash := ""
 
-	//Check which flag is inputted
-	switch {
+   //Check which flag is inputted
+   switch {
 
-	//If hash mode (-c), program also needs a hash as input
-	case *cFlag != "":
-		hash = *cFlag
+   //If hash mode (-c), program also needs a hash as input
+   case *cFlag != "":
+      hash = *cFlag
 
-	//If server mode (-s), listen on port 8080 for form input
-	case *sFlag:
-		err := funcs.ListenOnHttp(8080)
-		if err != nil {
-			log.Fatalln("ListenOnHttp: ", err)
-		}
+   //If server mode (-s), listen on port 8080 for form input
+   case *sFlag:
+      err := funcs.ListenOnHttp(8080)
+      if err != nil {
+         log.Fatalln("ListenOnHttp: ", err)
+      }
 
-	//If a hash is queued (-q), add it to the queue file
-	case *qFlag != "":
-		err := funcs.Queue(*qFlag, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/queue.txt")
-		if err != nil {
-			log.Fatalln("Queue: ", err)
-		}
-		fmt.Println("Hash has been queued!")
-		os.Exit(1)
+   //If a hash is queued (-q), add it to the queue file
+   case *qFlag != "":
+      err := funcs.Queue(*qFlag, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/queue.txt")
+      if err != nil {
+         log.Fatalln("Queue: ", err)
+      }
+      fmt.Println("Hash has been queued!")
+      os.Exit(1)
 
-	//If help message is requested (-help)
-	case *hFlag:
-		fallthrough
+   //If help message is requested (-help)
+   case *hFlag:
+      fallthrough
 
-	//If no supported flags were entered
-	default:
-		fmt.Println(funcs.Help())
-		os.Exit(1)
-	}
+   //If no supported flags were entered
+   default:
+      fmt.Println(funcs.Help())
+      os.Exit(1)
+   }
 
-	/** Google attack
-	* There's a high chance that the hash has already been cracked so we use google to find them!
-	**/
+   /** Google attack
+   * There's a high chance that the hash has already been cracked so we use google to find them!
+   **/
 
-	t0 := time.Now()
+   t0 := time.Now()
 
-	results, err := attacks.Google(hash)
-	if err != nil {
-		log.Fatalln("Google: ", err)
-	}
+   results, err := attacks.Google(hash)
+   if err != nil {
+      log.Fatalln("Google: ", err)
+   }
 
-	t1 := time.Now()
+   t1 := time.Now()
 
-	fmt.Printf("\n%d results on google\n", results)
-	fmt.Printf("Googled hash in %v.\n", t1.Sub(t0))
+   fmt.Printf("\n%d results on google\n", results)
+   fmt.Printf("Googled hash in %v.\n", t1.Sub(t0))
 
-	/** Bruteforce attack
-	*
+   /** Bruteforce attack
+   *
 
-	t0 = time.Now()
+   t0 = time.Now()
 
-	found, err := attacks.BruteForce(hash)
-	if err != nil {
-		log.Fatalln("BruteForce: ", err)
-	}
+   found, err := attacks.BruteForce(hash)
+   if err != nil {
+      log.Fatalln("BruteForce: ", err)
+   }
 
-	t1 = time.Now()
+   t1 = time.Now()
 
-	fmt.Printf("\n%s = %s\n", hash, found)
-	fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
-	**/
+   fmt.Printf("\n%s = %s\n", hash, found)
+   fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
+   **/
 
-	/** Wordlist attack
-	* Most people don't use random characters as their passwords, they use common words.
-	* By hashing and comparing the words in the list, we can find the word if the hash is identical.
-	**/
+   /** Wordlist attack
+   * Most people don't use random characters as their passwords, they use common words.
+   * By hashing and comparing the words in the list, we can find the word if the hash is identical.
+   **/
 
-	t0 = time.Now()
+   t0 = time.Now()
 
-	found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
-	if err != nil {
-		log.Fatalln("WordList: ", err)
-	}
+   found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+   if err != nil {
+      log.Fatalln("WordList: ", err)
+   }
 
-	t1 = time.Now()
+   t1 = time.Now()
 
-	fmt.Printf("\n%s = %s\n", hash, found)
-	fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
+   fmt.Printf("\n%s = %s\n", hash, found)
+   fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
 }
