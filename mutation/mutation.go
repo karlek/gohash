@@ -1,7 +1,11 @@
+//Mutate word to find common passwords
 package mutation
 
-//Wordlist mutations
+//Leet
 import "strings"
+
+//NumberSuffix
+import "strconv"
 
 var conversionMap = map[string]string{
 	"a": "4",
@@ -23,4 +27,18 @@ func Leet(input string) string {
 	}
 
 	return input
+}
+
+func NumberSuffix(input string) []string {
+
+	numberList := []string{}
+
+	//Compare hash with hashed number suffixed word
+	for i := 0; i <= 9999; i++ {
+
+		//Concatenate word with integer (0 - 9999)
+		numberList = append(numberList, input+strconv.Itoa(i))
+	}
+
+	return numberList
 }

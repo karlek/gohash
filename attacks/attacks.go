@@ -11,17 +11,16 @@ import "errors"
 import "net/http"
 import "io/ioutil"
 
+import "strings"
+import "strconv"
+
 //Brute test
-import "fmt"
+//import "fmt"
 
 //File
 import "os"
 import "bufio"
 import "io"
-
-//Mutations
-import "strconv"
-import "strings"
 
 // WordList tries to find the hash in the word list and returns the found
 // string on success.
@@ -51,8 +50,15 @@ func WordList(hash, wordListName string) (found string, err error) {
 	}
 	defer file.Close()
 
-	//Make file into reader
+	//Make file into buffered reader
 	r := bufio.NewReader(file)
+
+	mutateFunctions := []func(string) string{
+		strings.Title,
+		strings.ToUpper,
+		strings.ToLower,
+		mutation.Leet,
+	}
 
 	//For each word in word list, hash it and compare it to the entered hash.
 	//If they match, the password is the hashed word
@@ -76,36 +82,18 @@ func WordList(hash, wordListName string) (found string, err error) {
 			return word, nil
 		}
 
-		//Compare hash with hashed titled word
-		titled := strings.Title(word)
-		if hash == hashFunc(titled) {
-			return titled, nil
+		//Mutate the word for each mutation function
+		for _, mutateFunc := range mutateFunctions {
+
+			word := mutateFunc(word)
+
+			if hash == hashFunc(word) {
+				return word, nil
+			}
 		}
 
-		//Compare hash with hashed uppercase word
-		upper := strings.ToUpper(word)
-		if hash == hashFunc(upper) {
-			return upper, nil
-		}
-
-		//Compare hash with hashed lowercase word
-		lower := strings.ToLower(word)
-		if hash == hashFunc(lower) {
-			return lower, nil
-		}
-
-		//Compare hash with hashed leeted word
-		leet := mutation.Leet(word)
-		if hash == hashFunc(leet) {
-			return leet, nil
-		}
-
-		//Compare hash with hashed number suffixed word
-		for i := 0; i <= 9999; i++ {
-
-			//Concatenate word with integer (0 - 9999)
-			intString := word + strconv.Itoa(i)
-
+		numberList := mutation.NumberSuffix(word)
+		for _, intString := range numberList {
 			if hash == hashFunc(intString) {
 				return intString, nil
 			}
@@ -175,6 +163,7 @@ func isNumeric(input byte) bool {
 	return false
 }
 
+/*
 func BruteForce(hash string) (found string, err error) {
 
 	//Start with a-z
@@ -197,3 +186,4 @@ func BruteForce(hash string) (found string, err error) {
 
 	return "", errors.New("Hash not found")
 }
+*/

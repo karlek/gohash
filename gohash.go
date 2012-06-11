@@ -97,7 +97,6 @@ func main() {
 
 	/** Bruteforce attack
 	*
-	**/
 
 	t0 = time.Now()
 
@@ -110,6 +109,7 @@ func main() {
 
 	fmt.Printf("\n%s = %s\n", hash, found)
 	fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
+	**/
 
 	/** Wordlist attack
 	* Most people don't use random characters as their passwords, they use common words.
@@ -118,7 +118,7 @@ func main() {
 
 	t0 = time.Now()
 
-	found, err = attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+	found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
 	if err != nil {
 		log.Fatalln("WordList: ", err)
 	}

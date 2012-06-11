@@ -33,7 +33,7 @@ func Queue(hash, fileName string) (err error) {
 	}
 	defer file.Close()
 
-	_, err = file.Seek(0, 2)
+	_, err 	= file.Seek(0, 2)
 	if err != nil {
 		return err
 	}

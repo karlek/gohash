@@ -1,13 +1,14 @@
 Gohash
 ------
 
-A hashcracker in Golang
+A hash cracker in Golang
 
 This program currently features:
    - Permutations
-   - Wordlist attack
-   - Benchmarks
-   - HTTP server for adding hashes
+   - Word list attack
+   - Simple Google attack
+   - Alternatively HTTP server as input
    - Test cases
+   - Benchmarks
 
 I hereby place this into the public domain

@@ -21,14 +21,12 @@ func TestMD5(t *testing.T) {
 	}
 
 	for hash, out := range m {
-		found, err := attacks.WordList(hash, "a.txt")
-		if err != nil || out != found {
-			if mError[hash] != err.Error() {
-				if out != found {
-					t.Errorf("wordListAttack(%v) = %v, want %v\n\n", hash, found, out)
-				}
-				t.Errorf("%s - failed with error: %s\n", hash, err.Error())
-			}
+		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+		if err != nil && mError[hash] != err.Error() {
+			t.Errorf("%s - failed with error: %s\n", hash, err.Error())
+		}
+		if out != found {
+			t.Errorf("wordListAttack(%v) = %v, want %v\n\n", hash, found, out)
 		}
 	}
 }
@@ -50,14 +48,12 @@ func TestSHA1(t *testing.T) {
 	}
 
 	for hash, out := range m {
-		found, err := attacks.WordList(hash, "a.txt")
-		if err != nil || out != found {
-			if mError[hash] != err.Error() {
-				if out != found {
-					t.Errorf("wordListAttack(%v) = %v, want %v\n\n", hash, found, out)
-				}
-				t.Errorf("%s - failed with error: %s\n", hash, err.Error())
-			}
+		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+		if err != nil && mError[hash] != err.Error() {
+			t.Errorf("%s - failed with error: %s\n", hash, err.Error())
+		}
+		if out != found {
+			t.Errorf("wordListAttack(%v) = %v, want %v\n\n", hash, found, out)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-//Benchmak
+//Benchmark
 package main
 
 import "testing"
