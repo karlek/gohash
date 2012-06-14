@@ -2,7 +2,8 @@
 package main
 
 //Functions
-import "github.com/forsoki/gohash/attack"
+import "github.com/forsoki/gohash/google"
+import "github.com/forsoki/gohash/wordlist"
 import "github.com/forsoki/gohash/str2hash"
 import "github.com/forsoki/gohash/server"
 
@@ -98,7 +99,7 @@ func main() {
 
 	t0 := time.Now()
 
-	results, err := attack.Google(hash.Hash)
+	results, err := google.Google(hash.Hash)
 	if err != nil {
 		log.Fatalln("attack.Google: ", err)
 	}
@@ -116,7 +117,7 @@ func main() {
 	t0 = time.Now()
 
 	//Make wordlist from file
-	worder, err := attack.New(os.Getenv("GOPATH") + "/src/github.com/forsoki/gohash/a.txt")
+	worder, err := wordlist.New(os.Getenv("GOPATH") + "/src/github.com/forsoki/gohash/a.txt")
 	if err != nil {
 		log.Fatalln("attack.New: ", err)
 	}
