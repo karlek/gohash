@@ -2,8 +2,13 @@
 package main
 
 //Functions
-import "github.com/forsoki/gohash/funcs"
-import "github.com/forsoki/gohash/attacks"
+import "github.com/forsoki/gohash/attack"
+import "github.com/forsoki/gohash/str2hash"
+import "github.com/forsoki/gohash/server"
+
+//Mutatation
+import "strings"
+import "github.com/forsoki/gohash/mutation"
 
 //Output
 import "fmt"
@@ -19,112 +24,147 @@ import "flag"
 import "time"
 import "runtime/pprof"
 
-var cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
-var cFlag = flag.String("c", "", "Command line input for hash cracking")
-var sFlag = flag.Bool("s", false, "Server mode for hash cracking")
-var hFlag = flag.Bool("help", false, "Prints help message")
-var qFlag = flag.String("q", "", "Queues the hash to be cracked")
+//Flags
+var cpuprofile string
+var cFlag string
+var sFlag bool
+var portN int
+var hFlag bool
+
+func init() {
+
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "Write cpu profile to file")
+	flag.StringVar(&cFlag, "c", "", "Command line input for hash cracking")
+	flag.BoolVar(&sFlag, "s", false, "Server mode for hash cracking")
+	flag.IntVar(&portN, "port", 8080, "Port number for server mode")
+	flag.BoolVar(&hFlag, "help", false, "Prints help message")
+
+	flag.Usage = usage
+	flag.Parse()
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage: %s [OPTIONS]... [hash]...\n\n", os.Args[0])
+	flag.PrintDefaults()
+}
 
 func main() {
 
-   flag.Parse()
+	//Hash inputted via command-line
+	inputHash := ""
 
-   //Create profiling file if filename was entered
-   if *cpuprofile != "" {
-      f, err := os.Create(*cpuprofile)
-      if err != nil {
-         log.Fatal(err)
-      }
-      defer f.Close()
+	//Check flags is inputted
+	switch {
 
-      //Start profiling
-      pprof.StartCPUProfile(f)
+	//If command-line mode (-c), program reads in a hash
+	case cFlag != "":
+		inputHash = cFlag
 
-      //Stop profiling when program returns
-      defer pprof.StopCPUProfile()
-   }
+	//If server mode (-s), start service for hash cracking
+	case sFlag:
+		server.HttpServer(portN)
 
-   hash := ""
+	//Create profiling file if filename was entered
+	case cpuprofile != "":
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
 
-   //Check which flag is inputted
-   switch {
+		//Start profiling
+		pprof.StartCPUProfile(f)
 
-   //If hash mode (-c), program also needs a hash as input
-   case *cFlag != "":
-      hash = *cFlag
+		//Stop profiling when program returns
+		defer pprof.StopCPUProfile()
 
-   //If server mode (-s), listen on port 8080 for form input
-   case *sFlag:
-      err := funcs.ListenOnHttp(8080)
-      if err != nil {
-         log.Fatalln("ListenOnHttp: ", err)
-      }
+	//Print help message
+	case hFlag:
+		fallthrough
 
-   //If a hash is queued (-q), add it to the queue file
-   case *qFlag != "":
-      err := funcs.Queue(*qFlag, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/queue.txt")
-      if err != nil {
-         log.Fatalln("Queue: ", err)
-      }
-      fmt.Println("Hash has been queued!")
-      os.Exit(1)
+	default:
+		usage()
+		os.Exit(1)
+	}
 
-   //If help message is requested (-help)
-   case *hFlag:
-      fallthrough
+	hash, err := str2hash.New(inputHash)
+	if err != nil {
+		log.Fatalln("str2hash.New: ", err)
+	}
 
-   //If no supported flags were entered
-   default:
-      fmt.Println(funcs.Help())
-      os.Exit(1)
-   }
+	/** Google attack
+	* There's a high chance that the hash has already been cracked so we use google to find them!
+	**/
 
-   /** Google attack
-   * There's a high chance that the hash has already been cracked so we use google to find them!
-   **/
+	t0 := time.Now()
 
-   t0 := time.Now()
+	results, err := attack.Google(hash.Hash)
+	if err != nil {
+		log.Fatalln("attack.Google: ", err)
+	}
 
-   results, err := attacks.Google(hash)
-   if err != nil {
-      log.Fatalln("Google: ", err)
-   }
+	t1 := time.Now()
 
-   t1 := time.Now()
+	fmt.Printf("\n%d results on google\n", results)
+	fmt.Printf("Googled hash in %v.\n", t1.Sub(t0))
 
-   fmt.Printf("\n%d results on google\n", results)
-   fmt.Printf("Googled hash in %v.\n", t1.Sub(t0))
+	/** Wordlist attack
+	 * Most people don't use random characters as their passwords, they use common words.
+	 * By hashing and comparing the words in the list, we can find the word if the hash is identical.
+	 **/
 
-   /** Bruteforce attack
-   *
+	t0 = time.Now()
 
-   t0 = time.Now()
+	//Make wordlist from file
+	worder, err := attack.New(os.Getenv("GOPATH") + "/src/github.com/forsoki/gohash/a.txt")
+	if err != nil {
+		log.Fatalln("attack.New: ", err)
+	}
 
-   found, err := attacks.BruteForce(hash)
-   if err != nil {
-      log.Fatalln("BruteForce: ", err)
-   }
+	//Salt wordlist, in this case nothing happens since both strings are empty
+	worder.Salt("", "")
 
-   t1 = time.Now()
+	//Set mutate functions, these will affect the wordlist.Mutate() method 
+	worder.MutateFuncs = []func(string) string{
+		strings.Title,
+		strings.ToUpper,
+		strings.ToLower,
+		mutation.Leet,
+	}
 
-   fmt.Printf("\n%s = %s\n", hash, found)
-   fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
-   **/
+	//Add all mutations of the words to the wordlist and keeping the original
+	worder.Mutate()
 
-   /** Wordlist attack
-   * Most people don't use random characters as their passwords, they use common words.
-   * By hashing and comparing the words in the list, we can find the word if the hash is identical.
-   **/
+	newWorder := worder
+	newWorder.Words = Obsc(worder.Words)
 
-   t0 = time.Now()
+	c := make(chan string)
 
-   found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
-   if err != nil {
-      log.Fatalln("WordList: ", err)
-   }
+	///This comment might be wrong, but this is how I understood go channels
+	//The check functions runs through it's wordlist and searches for the correct string. If it fails it waits for the other goroutines. By using return, the goroutine which succeeds prematurely finishes the channel and prints the found string.
+	//I know now that it doesn't prematurely finish the channel, but it somehow chooses the goroutine which returns.
+	go worder.Check(hash, c)
+	go newWorder.Check(hash, c)
 
-   t1 = time.Now()
+	fmt.Println(<-c)
 
-   fmt.Printf("\n%s = %s\n", hash, found)
-   fmt.Printf("Hash found in %v.\n", t1.Sub(t0))
+	t1 = time.Now()
+
+	fmt.Printf("Hash lookup in %v.\n", t1.Sub(t0))
+}
+
+func Reverse(words []string) (newWords []string) {
+	for i := len(words) - 1; i > 0; i-- {
+		newWords = append(newWords, words[i])
+	}
+
+	return newWords
+}
+
+func Obsc(words []string) (newWords []string) {
+	for i := 0; i < 1000000; i++ {
+		newWords = append(newWords, "a")
+	}
+
+	return newWords
 }
