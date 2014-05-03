@@ -3,8 +3,8 @@ package main
 
 import "testing"
 
-import "github.com/forsoki/gohash/str2hash"
-import "github.com/forsoki/gohash/mutation"
+import "github.com/karlek/gohash/str2hash"
+import "github.com/karlek/gohash/mutation"
 
 func BenchmarkToLeet(b *testing.B) {
    b.StartTimer()
