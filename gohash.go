@@ -2,14 +2,14 @@
 package main
 
 //Functions
-import "github.com/forsoki/gohash/google"
-import "github.com/forsoki/gohash/wordlist"
-import "github.com/forsoki/gohash/str2hash"
-import "github.com/forsoki/gohash/server"
+import "github.com/karlek/gohash/google"
+import "github.com/karlek/gohash/wordlist"
+import "github.com/karlek/gohash/str2hash"
+import "github.com/karlek/gohash/server"
 
 //Mutatation
 import "strings"
-import "github.com/forsoki/gohash/mutation"
+import "github.com/karlek/gohash/mutation"
 
 //Output
 import "fmt"
@@ -117,7 +117,7 @@ func main() {
 	t0 = time.Now()
 
 	//Make wordlist from file
-	worder, err := wordlist.New(os.Getenv("GOPATH") + "/src/github.com/forsoki/gohash/a.txt")
+	worder, err := wordlist.New(os.Getenv("GOPATH") + "/src/github.com/karlek/gohash/a.txt")
 	if err != nil {
 		log.Fatalln("attack.New: ", err)
 	}

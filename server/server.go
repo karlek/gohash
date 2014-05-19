@@ -1,7 +1,7 @@
 package server
 
-import "github.com/forsoki/gohash/wordlist"
-import "github.com/forsoki/gohash/str2hash"
+import "github.com/karlek/gohash/wordlist"
+import "github.com/karlek/gohash/str2hash"
 
 import "net/http"
 import "fmt"
@@ -41,7 +41,7 @@ func httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	worder, err := wordlist.New(os.Getenv("GOPATH") + "/src/github.com/forsoki/gohash/a.txt")
+	worder, err := wordlist.New(os.Getenv("GOPATH") + "/src/github.com/karlek/gohash/a.txt")
 	if err != nil {
 		fmt.Println("New: ", err)
 	}

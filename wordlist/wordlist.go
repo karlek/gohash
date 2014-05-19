@@ -1,6 +1,6 @@
 package wordlist
 
-import "github.com/forsoki/gohash/str2hash"
+import "github.com/karlek/gohash/str2hash"
 import "github.com/mewkiz/pkg/bufioutil"
 import "strconv"
 import "runtime"
@@ -12,7 +12,7 @@ type Wordlist struct {
 
 func New(fileName string) (words Wordlist, err error) {
 
-	words.Words, err = bufioutil.ReadLines(fileName)
+	words.Words, err = bufioutil.LoadLines(fileName)
 	if err != nil {
 		return words, err
 	}

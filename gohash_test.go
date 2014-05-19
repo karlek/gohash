@@ -1,7 +1,7 @@
 //Test cases for word list attack with different type of hashes
 package main
 
-import "github.com/forsoki/gohash/attack"
+import "github.com/karlek/gohash/attack"
 import "testing"
 
 func TestMD5(t *testing.T) {
@@ -21,7 +21,7 @@ func TestMD5(t *testing.T) {
 	}
 
 	for hash, out := range m {
-		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/karlek/gohash/a.txt")
 		if err != nil && mError[hash] != err.Error() {
 			t.Errorf("%s - failed with error: %s\n", hash, err.Error())
 		}
@@ -48,7 +48,7 @@ func TestSHA1(t *testing.T) {
 	}
 
 	for hash, out := range m {
-		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/forsoki/gohash/a.txt")
+		found, err := attacks.WordList(hash, os.Getenv("GOPATH")+"/src/github.com/karlek/gohash/a.txt")
 		if err != nil && mError[hash] != err.Error() {
 			t.Errorf("%s - failed with error: %s\n", hash, err.Error())
 		}
