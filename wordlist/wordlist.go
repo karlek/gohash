@@ -1,52 +1,56 @@
 package wordlist
 
-import "github.com/karlek/gohash/str2hash"
-import "github.com/mewkiz/pkg/bufioutil"
-import "strconv"
-import "runtime"
+import (
+	"strconv"
+	"container/list"
 
+	"github.com/karlek/gohash/str2hash"
+	"github.com/mewkiz/pkg/bufioutil"
+)
 type Wordlist struct {
-	Words       []string
 	MutateFuncs []func(string) string
+	Words       *list.List
 }
 
-func New(fileName string) (words Wordlist, err error) {
-
-	words.Words, err = bufioutil.LoadLines(fileName)
+func New(fileName string) (wl Wordlist, err error) {
+	l := list.New()
+	ws, err := bufioutil.LoadLines(fileName)
 	if err != nil {
-		return words, err
+		return Wordlist{}, err
 	}
-	return words, nil
+	for _, w := range ws {
+		l.PushBack(w)
+	}
+	wl.Words = l
+	return wl, nil
 }
 
 func (worder *Wordlist) Salt(prefix, suffix string) {
+	f := func(word string)string {
+		return prefix + word + suffix
+	}
+	worder.SaltFunc(f)
+}
 
-	for key, word := range worder.Words {
-		worder.Words[key] = prefix + word + suffix
+func (worder *Wordlist) SaltFunc(f func(string)string) {
+	for e := worder.Words.Front(); e != nil; e = e.Next() {
+		e.Value = f(e.Value.(string))
 	}
 }
 
 func (worder Wordlist) Check(hash *str2hash.Hash, c chan string) {
-
-	for _, word := range worder.Words {
-		if hash.Hash == hash.HashFunc(word) {
-			c <- "Hash found: " + strconv.Quote(word)
-			return
+	for e := worder.Words.Front(); e != nil; e = e.Next() {
+		if hash.Hash == hash.HashFunc(e.Value.(string)) {
+			c <- "Hash found: " + strconv.Quote(e.Value.(string))
 		}
 	}
-	runtime.Gosched()
 	c <- "No wordlist found: " + hash.Hash
 }
 
 func (worder *Wordlist) Mutate() {
-
-	newWords := []string{}
-
 	for _, mutateFunc := range worder.MutateFuncs {
-		for _, word := range worder.Words {
-			newWords = append(newWords, mutateFunc(word))
+		for e := worder.Words.Front(); e != nil; e = e.Next() {
+			worder.Words.PushBack(mutateFunc(e.Value.(string)))
 		}
 	}
-
-	worder.Words = newWords
 }
